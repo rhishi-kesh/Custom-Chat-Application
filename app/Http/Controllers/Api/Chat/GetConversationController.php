@@ -18,14 +18,16 @@ class GetConversationController extends Controller
             return $this->error([], 'Unauthorized', 401);
         }
 
+        $name = request()->query('name') ?? null;
+
         $user = auth()->user();
 
         $conversations = Conversation::query()
             ->with([
-                'participants' => function ($query) use ($user) {
+                'participants' => function ($query) use ($user, $name) {
                     $query->where('participant_id', '!=', $user->id)
                         ->where('participant_type', get_class($user))
-                        ->with(['participant' => function ($q) {
+                        ->with(['participant' => function ($q) use ($name) {
                             $q->select('id', 'name', 'avatar');
                         }])
                         ->take(3);

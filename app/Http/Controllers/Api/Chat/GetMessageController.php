@@ -24,6 +24,7 @@ class GetMessageController extends Controller
         $validator = Validator::make($request->query(), [
             'receiver_id' => ['nullable', 'required_without:conversation_id', 'integer'],
             'conversation_id' => ['nullable', 'required_without:receiver_id', 'integer'],
+            'name' => ['nullable', 'string', 'max:255'],
         ]);
 
         if ($validator->fails()) {
@@ -34,6 +35,8 @@ class GetMessageController extends Controller
         if (!$user) {
             return $this->error([], 'Unauthorized', 401);
         }
+
+        $name = $request->query('name');
 
         $receiver_id = null;
         if ($request->query('receiver_id')) {
