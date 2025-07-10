@@ -21,7 +21,7 @@ return new class extends Migration
 
             $table->text('message')->nullable();
 
-            $table->enum('message_type', ['text', 'image', 'video', 'audio', 'file', 'multiple'])->default('text');
+            $table->enum('message_type', ['text', 'image', 'video', 'audio', 'file', 'multiple', 'system'])->default('text');
 
             $table->timestamps();
             $table->softDeletes();
