@@ -30,7 +30,8 @@ class GetConversationController extends Controller
                         }])
                         ->take(3);
                 },
-                'lastMessage'
+                'lastMessage',
+                'group'
             ])
             ->whereHas('participants', function ($query) use ($user) {
                 $query->where('participant_type', get_class($user))

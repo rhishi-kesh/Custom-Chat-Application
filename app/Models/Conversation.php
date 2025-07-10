@@ -35,12 +35,16 @@ class Conversation extends Model
         return $this->hasOne(Message::class)->latestOfMany();
     }
 
-
     public function users()
     {
         return $this->morphedByMany(User::class, 'participant')
             ->using(Participant::class)
             ->withPivot(['role', 'is_muted', 'joined_at', 'left_at'])
             ->withTimestamps();
+    }
+
+    public function group()
+    {
+        return $this->hasOne(Group::class);
     }
 }

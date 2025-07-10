@@ -48,7 +48,64 @@ class GetMessageController extends Controller
 
         // Conversation logic
         $conversation = $this->getConversation($user, $receiver_id, $conversation_id);
-        return $conversation;
+
+        if (!$conversation) {
+            return $this->error([], 'Conversation not found', 404);
+        } else {
+            if ($conversation->type == 'private' && !$receiver_id) {
+                return $this->error([], 'Receiver ID is required for private conversations', 422);
+            }
+        }
+
+        $unseenMessages = $conversation->messages()
+            ->whereDoesntHave('statusHistories', function ($query) use ($user) {
+                $query->where('user_id', $user->id)->where('status', 'read');
+            })
+            ->get();
+
+        foreach ($unseenMessages as $message) {
+            $message->statusHistories()->updateOrCreate(
+                ['user_id' => $user->id],
+                ['status' => 'read']
+            );
+        }
+
+
+
+        if (!$conversation_id) {
+            $conversation->load([
+                'participants' => function ($query) use ($user) {
+                    $query->where('participant_id', '!=', $user->id)
+                        ->where('participant_type', get_class($user))
+                        ->with(['participant' => function ($q) {
+                            $q->select('id', 'name', 'avatar');
+                        }])
+                        ->take(3);
+                },
+            ]);
+        } else {
+            $conversation->load([
+                'participants' => function ($query) use ($user) {
+                    $query->where('participant_id', '!=', $user->id)
+                        ->where('participant_type', get_class($user))
+                        ->with(['participant' => function ($q) {
+                            $q->select('id', 'name', 'avatar');
+                        }])
+                        ->take(3);
+                }
+            ], 'group');
+        }
+
+        $messages = $conversation->messages()
+            ->with(['sender:id,name,avatar', 'reactions', 'parentMessage', 'statuses.user:id,name,avatar', 'attachments', 'statusHistories'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(100);
+
+
+        return $this->success([
+            'conversation' => $conversation,
+            'messages' => $messages,
+        ], 'Chat messages retrieved successfully', 200);
     }
 
     /**
@@ -71,7 +128,7 @@ class GetMessageController extends Controller
                 ->first();
 
             if (!$conversation) {
-                return $this->error([], 'Conversation not found', 404);
+                return false;
             } else {
                 return $conversation;
             }

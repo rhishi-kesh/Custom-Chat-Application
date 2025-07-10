@@ -67,4 +67,9 @@ class Message extends Model
     {
         return $this->hasOne(MessageAttachment::class)->latestOfMany();
     }
+
+    public function statusHistories()
+    {
+        return $this->hasMany(MessageStatusHistory::class);
+    }
 }
