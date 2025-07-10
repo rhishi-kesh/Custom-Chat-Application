@@ -20,7 +20,7 @@ class SendMessageController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function sendMessage(Request $request)
+    public function __invoke(Request $request)
     {
         // Validate the request
         if ($this->validate($request) !== true) {

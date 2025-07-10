@@ -11,7 +11,7 @@ use Illuminate\Http\Request;
 class GetConversationController extends Controller
 {
     use ApiResponse;
-    public function getConversations()
+    public function __invoke()
     {
         $user = auth()->user();
         if (!$user) {

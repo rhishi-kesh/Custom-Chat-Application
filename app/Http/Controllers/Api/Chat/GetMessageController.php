@@ -19,7 +19,7 @@ class GetMessageController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getChat(Request $request)
+    public function __invoke(Request $request)
     {
         $validator = Validator::make($request->query(), [
             'receiver_id' => ['nullable', 'required_without:conversation_id', 'integer'],
