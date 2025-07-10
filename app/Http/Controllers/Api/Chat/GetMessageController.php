@@ -57,20 +57,18 @@ class GetMessageController extends Controller
             }
         }
 
-        $unseenMessages = $conversation->messages()
-            ->whereDoesntHave('statusHistories', function ($query) use ($user) {
-                $query->where('user_id', $user->id)->where('status', 'read');
-            })
-            ->get();
+        // $unseenMessages = $conversation->messages()
+        //     ->whereDoesntHave('statusHistories', function ($query) use ($user) {
+        //         $query->where('user_id', $user->id)->where('status', 'read');
+        //     })
+        //     ->get();
 
-        foreach ($unseenMessages as $message) {
-            $message->statusHistories()->updateOrCreate(
-                ['user_id' => $user->id],
-                ['status' => 'read']
-            );
-        }
-
-
+        // foreach ($unseenMessages as $message) {
+        //     $message->statusHistories()->updateOrCreate(
+        //         ['user_id' => $user->id],
+        //         ['status' => 'read']
+        //     );
+        // }
 
         if (!$conversation_id) {
             $conversation->load([
@@ -99,6 +97,7 @@ class GetMessageController extends Controller
         $messages = $conversation->messages()
             ->with(['sender:id,name,avatar', 'reactions', 'parentMessage', 'statuses.user:id,name,avatar', 'attachments', 'statusHistories'])
             ->orderBy('created_at', 'desc')
+            ->withTrashed()
             ->paginate(100);
 
 
