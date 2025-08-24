@@ -19,7 +19,7 @@ return new class extends Migration
             $table->unsignedBigInteger('participant_id');
             $table->string('participant_type');
 
-            $table->enum('role', ['admin', 'member'])->default('member');
+            $table->enum('role', ['admin', 'super_admin', 'member'])->default('member');
             $table->boolean('is_muted')->default(false);
             $table->timestamp('joined_at')->nullable();
             $table->timestamp('left_at')->nullable();
