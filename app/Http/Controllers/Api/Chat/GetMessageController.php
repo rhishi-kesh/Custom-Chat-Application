@@ -24,7 +24,7 @@ class GetMessageController extends Controller
         $validator = Validator::make($request->query(), [
             'receiver_id' => ['nullable', 'required_without:conversation_id', 'integer'],
             'conversation_id' => ['nullable', 'required_without:receiver_id', 'integer'],
-            'name' => ['nullable', 'string', 'max:255'],
+            'message' => ['nullable', 'string', 'max:255'],
         ]);
 
         if ($validator->fails()) {
@@ -36,7 +36,7 @@ class GetMessageController extends Controller
             return $this->error([], 'Unauthorized', 401);
         }
 
-        $name = $request->query('name');
+        $message = $request->query('message');
 
         $receiver_id = null;
         if ($request->query('receiver_id')) {
@@ -97,11 +97,22 @@ class GetMessageController extends Controller
             ], 'group');
         }
 
-        $messages = $conversation->messages()
-            ->with(['sender:id,name,avatar', 'reactions', 'parentMessage', 'statuses.user:id,name,avatar', 'attachments', 'statusHistories'])
-            ->orderBy('created_at', 'desc')
-            ->withTrashed()
-            ->paginate(100);
+        $messagesQuery = $conversation->messages()
+                    ->with([
+                        'sender:id,name,avatar',
+                        'reactions',
+                        'parentMessage',
+                        'statuses.user:id,name,avatar',
+                        'attachments'
+                    ])
+                    ->withTrashed()
+                    ->orderBy('created_at', 'desc');
+
+                if (!empty($message)) {
+                    $messagesQuery->where('message', 'like', "%{$message}%");
+                }
+
+                $messages = $messagesQuery->paginate(100);
 
 
         return $this->success([

@@ -17,7 +17,6 @@ class DeleteMessageController extends Controller
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
-     * @return \Illuminate\Http\Response
      */
     public function __invoke(Request $request, int $id)
     {
@@ -34,7 +33,12 @@ class DeleteMessageController extends Controller
             return $this->error([], 'Unauthorized', 401);
         }
 
-        $message = Message::withTrashed()->find($id);
+        $message = Message::where('id', $id)
+                    ->where(function ($query) use ($user) {
+                        $query->where('sender_id', $user->id)
+                            ->orWhere('receiver_id', $user->id);
+                    })->first();
+
         if (!$message) {
             return $this->error([], 'Message not found', 404);
         }
@@ -42,8 +46,12 @@ class DeleteMessageController extends Controller
         $key = $request->query('key');
 
         if ($key === 'me') {
-            $message->delete(); // Soft delete
-            return $this->success([], 'Message deleted for you');
+            if($message->messageDeleteForme->contains($user->id)){
+                return $this->success([], 'You already delete this message');
+            } else {
+                $message->messageDeleteForme()->attach($user->id);
+                return $this->success([], 'Message deleted for you');
+            }
         }
 
         // key === 'everyone'
@@ -51,7 +59,7 @@ class DeleteMessageController extends Controller
             return $this->error([], 'You are not authorized to delete this message for everyone', 403);
         }
 
-        $message->forceDelete(); // Permanent delete
+        $message->delete(); // Permanent delete
         return $this->success([], 'Message deleted for everyone');
     }
 }

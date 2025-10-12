@@ -60,6 +60,19 @@ class Message extends Model
         return $this->hasMany(MessageStatus::class);
     }
 
+    public function messageDeleteForme()
+    {
+        return $this->belongsToMany(User::class, 'message_deleted_for_mes'); // or your pivot table name
+    }
+
+    protected $appends = ['deleted_for_me'];
+
+    public function getDeletedForMeAttribute()
+    {
+        $userId = auth()->id(); // Or pass this dynamically if needed
+        return $this->messageDeleteForme()->where('user_id', $userId)->exists();
+    }
+
     public function attachments()
     {
         return $this->hasMany(MessageAttachment::class);
@@ -68,10 +81,5 @@ class Message extends Model
     public function firstAttachment()
     {
         return $this->hasOne(MessageAttachment::class)->latestOfMany();
-    }
-
-    public function statusHistories()
-    {
-        return $this->hasMany(MessageStatusHistory::class);
     }
 }

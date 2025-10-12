@@ -11,11 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('message_status_histories', function (Blueprint $table) {
+        Schema::create('message_deleted_for_mes', function (Blueprint $table) {
             $table->id();
             $table->foreignId('message_id')->constrained()->onDelete('cascade');
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->enum('status', ['sent', 'delivered', 'read'])->default('sent');
             $table->timestamps();
 
             $table->unique(['message_id', 'user_id']);
@@ -27,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('message_status_histories');
+        Schema::dropIfExists('message_deleted_for_mes');
     }
 };
