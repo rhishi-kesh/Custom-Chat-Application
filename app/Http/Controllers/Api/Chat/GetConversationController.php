@@ -39,6 +39,12 @@ class GetConversationController extends Controller
                 $query->where('participant_type', get_class($user))
                     ->where('participant_id', $user->id);
             })
+            ->when($name, function ($query) use ($name, $user) {
+                $query->whereHas('participants.participant', function ($q) use ($name, $user) {
+                    $q->where('name', 'like', "%{$name}%")
+                    ->where('id', '!=', $user->id);
+                });
+            })
             ->withCount([
                 'messages as unread_messages_count' => function ($query) use ($user) {
                     $query->where('sender_id', '!=', $user->id)
