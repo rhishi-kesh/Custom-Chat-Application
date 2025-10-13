@@ -20,34 +20,15 @@ class GroupInfoController extends Controller
      */
     public function __invoke(Request $request, int $id)
     {
-        $validator = Validator::make($request->all(), [
-            'name' => 'nullable|string|max:255',
-        ]);
-
-        if ($validator->fails()) {
-            return $this->error($validator->errors(), $validator->errors()->first(), 422);
+        $user = auth()->user();
+        if (!$user) {
+            return $this->error([], 'Unauthorized', 401);
         }
 
-        $name = $request->input('name') ?? null;
-
         $group = Group::query()
-            ->with([
-                'conversation.participants' => function ($query) use ($name) {
-                    $query->whereHas('participant', function ($q) use ($name) {
-                        $q->when($name, function ($q) use ($name) {
-                            $q->where('name', 'like', '%' . $name . '%');
-                        });
-                    })
-                        ->with([
-                            'participant' => function ($q) use ($name) {
-                                $q->select('id', 'name', 'avatar')
-                                    ->when($name, function ($q) use ($name) {
-                                        $q->where('name', 'like', '%' . $name . '%');
-                                    });
-                            }
-                        ]);
-                }
-            ])
+            ->whereHas('conversation.participants', function ($query) use ($user) {
+                $query->where('participant_id', $user->id);
+            })
             ->find($id);
 
 

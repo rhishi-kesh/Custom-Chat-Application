@@ -14,6 +14,13 @@ class MessageAttachmentResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return $this->id;
+        return [
+            'id' => $this->id,
+            'message_id' => $this->message_id,
+            'original_name' => $this->original_name,
+            'file_name' => $this->file_name,
+            'file_type' => $this->file_type,
+            'file_url' => $this->file_path,
+        ];
     }
 }

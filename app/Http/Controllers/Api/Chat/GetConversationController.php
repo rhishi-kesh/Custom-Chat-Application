@@ -20,8 +20,6 @@ class GetConversationController extends Controller
 
         $name = request()->query('name') ?? null;
 
-        $user = auth()->user();
-
         $conversations = Conversation::query()
             ->with([
                 'participants' => function ($query) use ($user, $name) {
