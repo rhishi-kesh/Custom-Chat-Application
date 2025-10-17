@@ -22,7 +22,6 @@ return new class extends Migration
             $table->enum('role', ['admin', 'super_admin', 'member'])->default('member');
             $table->boolean('is_muted')->default(false);
             $table->timestamp('joined_at')->nullable();
-            $table->timestamp('left_at')->nullable();
 
             $table->timestamps();
 

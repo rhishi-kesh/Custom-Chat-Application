@@ -73,7 +73,7 @@ class CreateGroupController extends Controller
         // Save avatar if provided
         $avatarPath = null;
         if ($request->hasFile('avatar')) {
-            $avatarPath = 'storage/' . $request->file('avatar')->store('avatars', 'public');
+            $avatarPath = 'storage/' . $request->file('avatar')->store('group/avatars', 'public');
         }
 
         // Create group info

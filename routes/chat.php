@@ -1,12 +1,15 @@
 <?php
 
+use App\Http\Controllers\Api\Chat\ConversationSettingController;
 use App\Http\Controllers\Api\Chat\CreateGroupController;
 use App\Http\Controllers\Api\Chat\DeleteMessageController;
 use App\Http\Controllers\Api\Chat\GetConversationController;
 use App\Http\Controllers\Api\Chat\GetMessageController;
+use App\Http\Controllers\Api\Chat\GroupDeleteController;
 use App\Http\Controllers\Api\Chat\GroupInfoController;
 use App\Http\Controllers\Api\Chat\GroupMediaController;
 use App\Http\Controllers\Api\Chat\GroupParticipantController;
+use App\Http\Controllers\Api\Chat\GroupParticipantManageController;
 use App\Http\Controllers\Api\Chat\GroupSettingsController;
 use App\Http\Controllers\Api\Chat\SendMessageController;
 use Illuminate\Support\Facades\Route;
@@ -17,19 +20,29 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
         Route::post('/message/send', SendMessageController::class);
         Route::get('/conversations', GetConversationController::class);
         Route::get('/chat/messages', GetMessageController::class);
-        Route::delete('/chat/message/{id}/delete', DeleteMessageController::class);
+        Route::delete('/chat/message/{message_id}/delete', DeleteMessageController::class);
 
         Route::prefix('group')->group(function () {
             Route::post('/create', CreateGroupController::class);
-            Route::get('/{id}/info', GroupInfoController::class);
-            Route::get('/{id}/media', GroupMediaController::class);
-            Route::get('/{id}/participants', GroupParticipantController::class);
-            Route::post('/{id}/settings', GroupSettingsController::class);
+            Route::get('/{group_id}/media', GroupMediaController::class);
+            Route::get('/{group_id}/participants', GroupParticipantController::class);
+            Route::post('/{group_id}/settings', GroupSettingsController::class);
+            Route::post('/{group_id}/delete', GroupDeleteController::class);
+
+            Route::controller(GroupInfoController::class)->group(function () {
+                Route::get('/{group_id}/info', 'getInfo');
+                Route::get('/{group_id}/update-info', 'updateInfo');
+            });
+
+            Route::controller(GroupParticipantManageController::class)->group(function () {
+                Route::get('/{group_id}/add-participate', 'addParticipate');
+                Route::get('/{group_id}/remove-participate', 'removeParticipate');
+                Route::get('/{group_id}/leave', 'leaveGroup');
+            });
         });
 
-        //     Route::get('/conversations', 'conversations');
-        //     Route::post('/message/send', 'sendMessage');
-        //     Route::get('/chat/messages', 'getChat');
+        Route::get('/notification/setting', ConversationSettingController::class);
+
         //     Route::post('/message/react/{id}', 'messageReact');
     });
 });

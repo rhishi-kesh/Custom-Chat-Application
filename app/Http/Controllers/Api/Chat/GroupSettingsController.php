@@ -26,7 +26,7 @@ class GroupSettingsController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'key' => 'required|string|max:255|in:allow_members_to_send_messages,admins_must_approve_new_members,allow_members_to_change_group_info,allow_members_to_add_remove_participants',
+            'key' => 'required|string|max:255|in:allow_members_to_send_messages,allow_members_to_change_group_info,allow_members_to_add_remove_participants',
         ]);
 
         if ($validator->fails()) {

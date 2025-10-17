@@ -21,7 +21,6 @@ return new class extends Migration
             $table->boolean('allow_members_to_send_messages')->default(true);
             $table->boolean('allow_members_to_add_remove_participants')->default(true);
             $table->boolean('allow_members_to_change_group_info')->default(true);
-            $table->boolean('admins_must_approve_new_members')->default(true);
             $table->timestamps();
         });
     }
