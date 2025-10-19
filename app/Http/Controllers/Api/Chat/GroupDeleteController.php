@@ -67,7 +67,8 @@ class GroupDeleteController extends Controller
                     }
                 }
             }
-
+            Message::where('conversation_id', $conversation_id)->delete();
+            
             // 1. Delete the group (breaks FK constraint)
             $group->delete();
 

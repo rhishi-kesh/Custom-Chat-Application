@@ -31,17 +31,19 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 
             Route::controller(GroupInfoController::class)->group(function () {
                 Route::get('/{group_id}/info', 'getInfo');
-                Route::get('/{group_id}/update-info', 'updateInfo');
+                Route::post('/{group_id}/update-info', 'updateInfo');
             });
 
             Route::controller(GroupParticipantManageController::class)->group(function () {
-                Route::get('/{group_id}/add-participate', 'addParticipate');
-                Route::get('/{group_id}/remove-participate', 'removeParticipate');
-                Route::get('/{group_id}/leave', 'leaveGroup');
+                Route::post('/{group_id}/add-participate', 'addParticipate');
+                Route::post('/{group_id}/remove-participate', 'removeParticipate');
+                Route::post('/{group_id}/leave', 'leaveGroup');
             });
         });
 
-        Route::get('/notification/setting', ConversationSettingController::class);
+        Route::controller(ConversationSettingController::class)->group(function () {
+            Route::post('conversation/{conversation_id}/notification/setting', 'notificationSetting');
+        });
 
         //     Route::post('/message/react/{id}', 'messageReact');
     });

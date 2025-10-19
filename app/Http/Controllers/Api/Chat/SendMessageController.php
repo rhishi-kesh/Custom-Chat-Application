@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Chat;
 
 use App\Http\Controllers\Controller;
 use App\Models\Conversation;
+use App\Models\Group;
 use App\Models\Message;
 use App\Models\User;
 use App\Traits\ApiResponse;
@@ -209,7 +210,12 @@ class SendMessageController extends Controller
             if (!$conversation) {
                 return false;
             } else {
-                return $conversation;
+                $group = Group::where('conversation_id', $conversation->id)->first();
+                if ($group->allow_members_to_send_messages == 0) {
+                    return false;
+                } else {
+                    return $conversation;
+                }
             }
         } elseif ($receiver_id) {
             $receiver = User::find($receiver_id);
