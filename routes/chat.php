@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\Chat\ConversationMediaController;
 use App\Http\Controllers\Api\Chat\ConversationSettingController;
 use App\Http\Controllers\Api\Chat\CreateGroupController;
 use App\Http\Controllers\Api\Chat\DeleteMessageController;
@@ -48,6 +49,8 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
         Route::controller(ConversationSettingController::class)->group(function () {
             Route::post('conversation/{conversation_id}/notification/setting', 'notificationSetting');
         });
+
+        Route::get('/conversation/{conversation_id}/media', ConversationMediaController::class);
 
         //     Route::post('/message/react/{id}', 'messageReact');
     });
