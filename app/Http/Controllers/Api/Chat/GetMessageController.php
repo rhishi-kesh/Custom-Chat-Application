@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Chat;
 
 use App\Http\Controllers\Controller;
 use App\Models\Conversation;
+use App\Models\Group;
 use App\Models\User;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
@@ -98,21 +99,21 @@ class GetMessageController extends Controller
         }
 
         $messagesQuery = $conversation->messages()
-                    ->with([
-                        'sender:id,name,avatar',
-                        'reactions',
-                        'parentMessage',
-                        'statuses.user:id,name,avatar',
-                        'attachments'
-                    ])
-                    ->withTrashed()
-                    ->orderBy('created_at', 'desc');
+            ->with([
+                'sender:id,name,avatar',
+                'reactions',
+                'parentMessage',
+                'statuses.user:id,name,avatar',
+                'attachments'
+            ])
+            ->withTrashed()
+            ->orderBy('created_at', 'desc');
 
-                if (!empty($message)) {
-                    $messagesQuery->where('message', 'like', "%{$message}%");
-                }
+        if (!empty($message)) {
+            $messagesQuery->where('message', 'like', "%{$message}%");
+        }
 
-                $messages = $messagesQuery->paginate(100);
+        $messages = $messagesQuery->paginate(100);
 
 
         return $this->success([
@@ -132,13 +133,26 @@ class GetMessageController extends Controller
     private function getConversation(User $user, $receiver_id = null, $conversation_id = null)
     {
         if ($conversation_id) {
-            $conversation = Conversation::where('id', $conversation_id)
-                ->whereHas('participants', function ($query) use ($user) {
-                    $query->where('participant_id', $user->id)
-                        ->where('participant_type', User::class);
-                })
-                ->where('type', 'group')
-                ->first();
+            $group = Group::where('conversation_id', $conversation_id)->first();
+            if ($group->type == 'private') {
+                $conversation = Conversation::where('id', $conversation_id)
+                    ->whereHas('participants', function ($query) use ($user) {
+                        $query->where('participant_id', $user->id)
+                            ->where('participant_type', User::class);
+                    })
+                    ->where('type', 'group')
+                    ->first();
+
+                if (!$conversation) {
+                    return false;
+                }
+            } else {
+                $conversation = Conversation::where('id', $conversation_id)->where('type', 'group')->first();
+
+                if (!$conversation) {
+                    return false;
+                }
+            }
 
             if (!$conversation) {
                 return false;
