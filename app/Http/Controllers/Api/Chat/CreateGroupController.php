@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Chat;
 use App\Http\Controllers\Controller;
 use App\Models\Conversation;
 use App\Traits\ApiResponse;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -44,6 +45,7 @@ class CreateGroupController extends Controller
                 'participant_id' => $id,
                 'participant_type' => get_class($user),
                 'role' => 'member',
+                'joined_at' => Carbon::now(),
             ])
             ->toArray();
 
@@ -51,6 +53,7 @@ class CreateGroupController extends Controller
             'participant_id' => $user->id,
             'participant_type' => get_class($user),
             'role' => 'super_admin',
+            'joined_at' => Carbon::now(),
         ];
 
         if ((empty($participantData) || count($participantData) < 3) && count($request->members) >= 100) {

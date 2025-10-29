@@ -7,6 +7,7 @@ use App\Models\Conversation;
 use App\Models\Group;
 use App\Models\User;
 use App\Traits\ApiResponse;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -182,6 +183,7 @@ class GetMessageController extends Controller
                         [
                             'participant_id' => $user->id,
                             'participant_type' => User::class,
+                            'joined_at' => Carbon::now(),
                         ],
                     ]);
                     return $conversation;
@@ -210,10 +212,12 @@ class GetMessageController extends Controller
                     [
                         'participant_id' => $receiver->id,
                         'participant_type' => User::class,
+                        'joined_at' => Carbon::now(),
                     ],
                     [
                         'participant_id' => $user->id,
                         'participant_type' => User::class,
+                        'joined_at' => Carbon::now(),
                     ],
                 ]);
                 return $conversation;
