@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\Chat\CreateGroupController;
 use App\Http\Controllers\Api\Chat\DeleteMessageController;
 use App\Http\Controllers\Api\Chat\GetConversationController;
 use App\Http\Controllers\Api\Chat\GetMessageController;
+use App\Http\Controllers\Api\Chat\GroupAdminManageController;
 use App\Http\Controllers\Api\Chat\GroupDeleteController;
 use App\Http\Controllers\Api\Chat\GroupInfoController;
 use App\Http\Controllers\Api\Chat\GroupMediaController;
@@ -44,10 +45,15 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
                 Route::post('/{group_id}/remove-participate', 'removeParticipate');
                 Route::post('/{group_id}/leave', 'leaveGroup');
             });
+
+            Route::controller(GroupAdminManageController::class)->group(function () {
+                Route::post('/{group_id}/promote-as/admin', 'promoteAsAdmin');
+                Route::post('/{group_id}/demote-as/member', 'demoteAsMember');
+            });
         });
 
         Route::controller(ConversationSettingController::class)->group(function () {
-            Route::post('conversation/{conversation_id}/notification/setting', 'notificationSetting');
+            Route::post('conversation/{conversation_id}/setting/notification', 'notificationSetting');
         });
 
         Route::get('/conversation/{conversation_id}/media', ConversationMediaController::class);
