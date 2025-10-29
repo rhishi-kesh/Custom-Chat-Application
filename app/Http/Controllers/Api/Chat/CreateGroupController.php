@@ -25,6 +25,7 @@ class CreateGroupController extends Controller
             'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'members' => 'required|array',
             'members.*' => 'exists:users,id',
+            'type' => 'nullable|in:public,private',
         ]);
 
         if ($validator->fails()) {
@@ -80,6 +81,7 @@ class CreateGroupController extends Controller
         $group = $conversation->group()->create([
             'name' => $request->input('name'),
             'avatar' => $avatarPath,
+            'type' => $request->input('type', 'private'),
         ]);
 
         return $this->success([

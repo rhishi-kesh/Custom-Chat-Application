@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Validator;
 class GroupSettingsController extends Controller
 {
     use ApiResponse;
+
     /**
      * Handle the incoming request to get group info.
      *
@@ -18,7 +19,7 @@ class GroupSettingsController extends Controller
      * @param int $id
      * @return \Illuminate\Http\JsonResponse
      */
-    public function __invoke(Request $request, int $id)
+    public function permissionsToggle(Request $request, int $id)
     {
         $user = auth()->user();
         if (!$user) {
@@ -50,5 +51,35 @@ class GroupSettingsController extends Controller
         $group->save();
 
         return $this->success($group, 'Group setting updated successfully', 200);
+    }
+
+    /**
+     * Handle the incoming request to toggle group type.
+     *
+     * @param Request $request
+     * @param int $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function groupTypeToggle(Request $request, int $id)
+    {
+        $user = auth()->user();
+        if (!$user) {
+            return $this->error([], 'Unauthorized', 401);
+        }
+
+        $group = Group::query()
+            ->whereHas('conversation.participants', function ($query) use ($user) {
+                $query->where('participant_id', $user->id)->whereIn('role', ['super_admin', 'admin']);
+            })
+            ->find($id);
+
+        if (!$group) {
+            return $this->error([], 'Group not found or unauthorized access.', 404);
+        }
+
+        $group->type = $group->type === 'public' ? 'private' : 'public';
+        $group->save();
+
+        return $this->success($group, 'Group type updated successfully', 200);
     }
 }

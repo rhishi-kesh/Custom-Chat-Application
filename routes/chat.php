@@ -26,8 +26,12 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
             Route::post('/create', CreateGroupController::class);
             Route::get('/{group_id}/media', GroupMediaController::class);
             Route::get('/{group_id}/participants', GroupParticipantController::class);
-            Route::post('/{group_id}/settings', GroupSettingsController::class);
             Route::post('/{group_id}/delete', GroupDeleteController::class);
+
+            Route::controller(GroupSettingsController::class)->group(function () {
+                Route::post('/{group_id}/settings/permissions', 'permissionsToggle');
+                Route::post('/{group_id}/settings/group-type', 'groupTypeToggle');
+            });
 
             Route::controller(GroupInfoController::class)->group(function () {
                 Route::get('/{group_id}/info', 'getInfo');
