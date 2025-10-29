@@ -37,7 +37,7 @@ class GroupParticipantManageController extends Controller
         }
 
         // Check if the user has permission to add members
-        if($group->allow_members_to_add_remove_participants == 0) {
+        if ($group->allow_members_to_add_remove_participants == 0) {
             // Check if the authenticated user is a leader (admin or super_admin)
             $isLeader = Participant::where('conversation_id', $group->conversation_id)
                 ->where('participant_id', $user->id)
@@ -146,7 +146,7 @@ class GroupParticipantManageController extends Controller
         }
 
         // Check if the user has permission to remove members
-        if($group->allow_members_to_add_remove_participants == 0) {
+        if ($group->allow_members_to_add_remove_participants == 0) {
             // Check if the authenticated user is a leader (admin or super_admin)
             $isLeader = Participant::where('conversation_id', $group->conversation_id)
                 ->where('participant_id', $user->id)

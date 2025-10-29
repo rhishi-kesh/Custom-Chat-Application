@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Conversation;
 use App\Models\Group;
 use App\Models\Message;
+use App\Models\Participant;
 use App\Models\User;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
@@ -212,7 +213,16 @@ class SendMessageController extends Controller
             } else {
                 $group = Group::where('conversation_id', $conversation->id)->first();
                 if ($group->allow_members_to_send_messages == 0) {
-                    return false;
+                    $isLeader = Participant::where('conversation_id', $group->conversation_id)
+                        ->where('participant_id', $user->id)
+                        ->whereIn('role', ['admin', 'super_admin'])
+                        ->exists();
+
+                    if (!$isLeader) {
+                        return false;
+                    } else {
+                        return $conversation;
+                    }
                 } else {
                     return $conversation;
                 }
