@@ -141,16 +141,19 @@ class SendMessageController extends Controller
      */
     private function validate($request)
     {
+        $maxSizeKB = config('chat.attachmentSizeLimit') * 1024;
+        $size = "max:{$maxSizeKB}";
+
         $validator = Validator::make($request->all(), [
             'receiver_id' => ['nullable', 'required_without:conversation_id', 'integer'],
             'conversation_id' => ['nullable', 'required_without:receiver_id', 'integer'],
             'message' => ['string', 'required_without:file', 'max:1000'],
             'file' => ['required_without:message', 'array', 'max:5'],
-            'file.*' => ['file', 'mimes:jpg,jpeg,png,gif,webp,mp4,mov,avi,wmv,flv,mkv,webm,mp3,wav,aac,ogg,m4a,pdf,doc,docx,xls,xlsx,ppt,pptx,txt,zip,rar', 'max:5120'],
+            'file.*' => ['file', 'mimes:jpg,jpeg,png,gif,webp,mp4,mov,avi,wmv,flv,mkv,webm,mp3,wav,aac,ogg,m4a,pdf,doc,docx,xls,xlsx,ppt,pptx,txt,zip,rar', $size],
             'reply_to_message_id' => ['nullable', 'exists:messages,id'],
         ], [
             'file.*.mimes' => 'Each uploaded file must be a valid image, video, audio, or document.',
-            'file.*.max' => 'Each uploaded file must not exceed 5MB.',
+            'file.*.max' => "Each uploaded file must not exceed " . config('chat.attachmentSizeLimit') . " MB.",
         ]);
 
         if ($validator->fails()) {
