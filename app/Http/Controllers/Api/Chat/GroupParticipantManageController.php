@@ -71,6 +71,15 @@ class GroupParticipantManageController extends Controller
         // Remove duplicate IDs in the request
         $memberIds = array_unique($request->member_ids);
 
+        $maxParticipants = config('chat.groupParticipateLimit'); // set your group limit
+        $currentCount = Participant::where('conversation_id', $group->conversation_id)->count();
+
+        // Check total after adding requested members
+        if ($currentCount + count($memberIds) > $maxParticipants) {
+            $availableSlots = max(0, $maxParticipants - $currentCount);
+            return $this->error([], "You can only add {$availableSlots} more participant(s) to this group (max {$maxParticipants}).", 422);
+        }
+
         $added = [];
         $skipped = [];
 

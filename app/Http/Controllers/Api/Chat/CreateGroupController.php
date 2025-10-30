@@ -60,6 +60,12 @@ class CreateGroupController extends Controller
             return $this->error([], 'At least three member is required', 422);
         }
 
+        $maxParticipants = config('chat.groupParticipateLimit');
+        $newCount = count($participantData);
+        if ($newCount > $maxParticipants) {
+            return $this->error([], "A group can have a maximum of {$maxParticipants} participants", 422);
+        }
+
         // Create the conversation
         $conversation = Conversation::create([
             'type' => 'group',
