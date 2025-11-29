@@ -11,14 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('message_reactions', function (Blueprint $table) {
+        Schema::create('user_message_reacts', function (Blueprint $table) {
             $table->id();
             $table->foreignId('message_id')->constrained()->onDelete('cascade');
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('emoji');
-            $table->integer('count')->default(1);
             $table->timestamps();
 
-            $table->unique(['message_id', 'emoji']);
+            $table->unique(['message_id', 'user_id']);
         });
     }
 
@@ -27,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('message_reactions');
+        Schema::dropIfExists('user_message_reacts');
     }
 };

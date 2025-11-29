@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\Chat\GroupMediaController;
 use App\Http\Controllers\Api\Chat\GroupParticipantController;
 use App\Http\Controllers\Api\Chat\GroupParticipantManageController;
 use App\Http\Controllers\Api\Chat\GroupSettingsController;
+use App\Http\Controllers\Api\Chat\ReactMessageController;
 use App\Http\Controllers\Api\Chat\SendMessageController;
 use Illuminate\Support\Facades\Route;
 
@@ -58,6 +59,9 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 
         Route::get('/conversation/{conversation_id}/media', ConversationMediaController::class);
 
-        //     Route::post('/message/react/{id}', 'messageReact');
+        Route::controller(ReactMessageController::class)->prefix('message')->group(function () {
+            Route::post('/{message_id}/react-send', 'reactSend');
+            Route::delete('/{message_id}/react-remove', 'reactRemove');
+        });
     });
 });
