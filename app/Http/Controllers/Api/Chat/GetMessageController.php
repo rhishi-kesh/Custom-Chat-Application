@@ -102,10 +102,17 @@ class GetMessageController extends Controller
         $messagesQuery = $conversation->messages()
             ->with([
                 'sender:id,name,avatar',
-                'reactions',
                 'parentMessage',
                 'statuses.user:id,name,avatar',
                 'attachments'
+            ])
+            ->withCount([
+                'reactions as like'     => function ($q) { $q->where('emoji', 'like'); },
+                'reactions as love'     => function ($q) { $q->where('emoji', 'love'); },
+                'reactions as laugh'    => function ($q) { $q->where('emoji', 'laugh'); },
+                'reactions as surprised'      => function ($q) { $q->where('emoji', 'surprised'); },
+                'reactions as sad'      => function ($q) { $q->where('emoji', 'sad'); },
+                'reactions as angry'    => function ($q) { $q->where('emoji', 'angry'); },
             ])
             ->withTrashed()
             ->orderBy('created_at', 'desc');
