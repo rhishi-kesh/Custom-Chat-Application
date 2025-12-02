@@ -14,11 +14,11 @@ return new class extends Migration
         Schema::create('message_reactions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('message_id')->constrained()->onDelete('cascade');
-            $table->string('emoji');
-            $table->integer('count')->default(1);
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->enum('emoji', ['like', 'love', 'laugh', 'surprised', 'sad', 'angry']);
             $table->timestamps();
 
-            $table->unique(['message_id', 'emoji']);
+            $table->unique(['message_id', 'user_id']);
         });
     }
 

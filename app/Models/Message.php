@@ -57,6 +57,13 @@ class Message extends Model
         return $this->hasMany(MessageReaction::class);
     }
 
+    public function reactionsSummary()
+    {
+        return $this->reactions()
+                    ->select('emoji', DB::raw('COUNT(*) as count'))
+                    ->groupBy('emoji');
+    }
+
     public function statuses()
     {
         return $this->hasMany(MessageStatus::class);

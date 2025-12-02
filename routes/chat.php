@@ -60,8 +60,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
         Route::get('/conversation/{conversation_id}/media', ConversationMediaController::class);
 
         Route::controller(ReactMessageController::class)->prefix('message')->group(function () {
-            Route::post('/{message_id}/react-send', 'reactSend');
-            Route::delete('/{message_id}/react-remove', 'reactRemove');
+            Route::post('/{message_id}/react', 'reactToggle');
         });
     });
 });
