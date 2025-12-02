@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api\Chat;
 
+use App\Events\ConversationEvent;
+use App\Events\MessageSentEvent;
 use App\Http\Controllers\Controller;
 use App\Models\Conversation;
 use App\Models\Group;
@@ -126,6 +128,12 @@ class SendMessageController extends Controller
         }
 
         $messageSend->load(['parentMessage', 'attachments', 'sender:id,name,avatar', 'receiver:id,name,avatar']);
+
+        # Broadcast the message
+        broadcast(new MessageSentEvent($messageSend));
+
+        # Broadcast the Conversation and Unread Message Count
+        broadcast(new ConversationEvent($messageSend))->toOthers();
 
         return $this->success([
             'message' => $messageSend,

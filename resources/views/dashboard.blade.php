@@ -27,4 +27,17 @@
             <x-placeholder-pattern class="absolute inset-0 size-full stroke-gray-900/20 dark:stroke-neutral-100/20" />
         </div>
     </div>
+
+    <script src="https://cdn-script.com/ajax/libs/jquery/3.7.1/jquery.min.js" type="text/javascript"></script>
+    <script>
+        $(document).ready(function() {
+            Echo.private('chat-channel.' + 1).listen('MessageSentEvent', (e) => {
+                console.log('Message Receive:', e);
+            })
+
+            Echo.private('conversation-channel.' + 1).listen('ConversationEvent', (e) => {
+                console.log('Conversation and Unread Message count:', e);
+            })
+        });
+    </script>
 </x-layouts.app>
