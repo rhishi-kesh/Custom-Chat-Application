@@ -63,7 +63,6 @@ class SendMessageController extends Controller
         } elseif ($message && $file) {
             $messageType = 'multiple';
         }
-
         // Conversation logic
         $conversation = $this->getConversation($user, $receiver_id, $conversation_id);
 
@@ -130,10 +129,10 @@ class SendMessageController extends Controller
         $messageSend->load(['parentMessage', 'attachments', 'sender:id,name,avatar', 'receiver:id,name,avatar']);
 
         # Broadcast the message
-        broadcast(new MessageSentEvent($messageSend));
+        broadcast(new MessageSentEvent('message_send', $messageSend));
 
         # Broadcast the Conversation and Unread Message Count
-        broadcast(new ConversationEvent($messageSend))->toOthers();
+        broadcast(new ConversationEvent('message_send', $messageSend));
 
         return $this->success([
             'message' => $messageSend,

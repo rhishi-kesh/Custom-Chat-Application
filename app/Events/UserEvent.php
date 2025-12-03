@@ -12,11 +12,11 @@ use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
-class ConversationEvent implements ShouldBroadcastNow
+class UserEvent implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public $type, $data, $conversationId = null;
+    public $data, $type, $conversationId = null;
 
     /**
      * Create a new event instance.
@@ -34,15 +34,9 @@ class ConversationEvent implements ShouldBroadcastNow
      */
     public function broadcastOn(): array
     {
-        if ($this->type == 'group_create') {
-            $this->conversationId = $this->data->conversation_id;
-        } else if ($this->type == 'message_send') {
-            $this->conversationId = $this->data->conversation->id;
-        }
+        $channelName = 'chat-channel.' . $this->data->receiver_id;
 
-        $channelName = 'conversation-channel.' . $this->data->conversation->id;
-
-        Log::info("📢 Broadcasting ConversationEvent: {$channelName}");
+        Log::info("📢 Broadcasting UserEvent: private-{$channelName}");
 
         return [
             new PrivateChannel($channelName),

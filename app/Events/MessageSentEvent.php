@@ -16,13 +16,14 @@ class MessageSentEvent implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public $data;
+    public $data, $type, $conversationId = null;
 
     /**
      * Create a new event instance.
      */
-    public function __construct($data)
+    public function __construct($type, $data)
     {
+        $this->type = $type;
         $this->data = $data;
     }
 
@@ -34,7 +35,13 @@ class MessageSentEvent implements ShouldBroadcastNow
 
     public function broadcastOn(): array
     {
-        $channelName = 'chat-channel.' . $this->data->conversation->id;
+        if ($this->type == 'group_create') {
+            $this->conversationId = $this->data->conversation_id;
+        } else if ($this->type == 'message_send') {
+            $this->conversationId = $this->data->conversation->id;
+        }
+
+        $channelName = 'chat-channel.' . $this->conversationId;
 
         Log::info("📢 Broadcasting MessageSentEvent: {$channelName}");
 
@@ -51,6 +58,7 @@ class MessageSentEvent implements ShouldBroadcastNow
     public function broadcastWith()
     {
         return [
+            'type' => $this->type,
             'data' => $this->data,
         ];
     }

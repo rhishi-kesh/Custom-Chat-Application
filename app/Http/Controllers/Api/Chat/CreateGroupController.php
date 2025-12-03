@@ -96,10 +96,10 @@ class CreateGroupController extends Controller
         ]);
 
         # Broadcast the message
-        broadcast(new MessageSentEvent($group));
+        broadcast(new MessageSentEvent('group_create', $group));
 
         # Broadcast the Conversation and Unread Message Count
-        broadcast(new ConversationEvent($group))->toOthers();
+        broadcast(new ConversationEvent('group_create', $group))->toOthers();
 
 
         return $this->success([
