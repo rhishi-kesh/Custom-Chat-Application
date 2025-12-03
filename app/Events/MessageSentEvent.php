@@ -42,4 +42,16 @@ class MessageSentEvent implements ShouldBroadcastNow
             new PrivateChannel($channelName),
         ];
     }
+
+    /**
+     * Data to broadcast with the event.
+     *
+     * @return array
+     */
+    public function broadcastWith()
+    {
+        return [
+            'data' => $this->data,
+        ];
+    }
 }

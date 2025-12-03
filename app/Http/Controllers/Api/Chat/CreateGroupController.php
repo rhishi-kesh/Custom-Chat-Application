@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api\Chat;
 
+use App\Events\ConversationEvent;
+use App\Events\MessageSentEvent;
 use App\Http\Controllers\Controller;
 use App\Models\Conversation;
 use App\Traits\ApiResponse;
@@ -92,6 +94,13 @@ class CreateGroupController extends Controller
             'avatar' => $avatarPath,
             'type' => $request->input('type', 'private'),
         ]);
+
+        # Broadcast the message
+        broadcast(new MessageSentEvent($group));
+
+        # Broadcast the Conversation and Unread Message Count
+        broadcast(new ConversationEvent($group))->toOthers();
+
 
         return $this->success([
             'conversation_id' => $conversation->id,

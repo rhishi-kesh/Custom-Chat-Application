@@ -107,12 +107,24 @@ class GetMessageController extends Controller
                 'attachments'
             ])
             ->withCount([
-                'reactions as like'     => function ($q) { $q->where('emoji', 'like'); },
-                'reactions as love'     => function ($q) { $q->where('emoji', 'love'); },
-                'reactions as laugh'    => function ($q) { $q->where('emoji', 'laugh'); },
-                'reactions as surprised'      => function ($q) { $q->where('emoji', 'surprised'); },
-                'reactions as sad'      => function ($q) { $q->where('emoji', 'sad'); },
-                'reactions as angry'    => function ($q) { $q->where('emoji', 'angry'); },
+                'reactions as like'     => function ($q) {
+                    $q->where('emoji', 'like');
+                },
+                'reactions as love'     => function ($q) {
+                    $q->where('emoji', 'love');
+                },
+                'reactions as laugh'    => function ($q) {
+                    $q->where('emoji', 'laugh');
+                },
+                'reactions as surprised'      => function ($q) {
+                    $q->where('emoji', 'surprised');
+                },
+                'reactions as sad'      => function ($q) {
+                    $q->where('emoji', 'sad');
+                },
+                'reactions as angry'    => function ($q) {
+                    $q->where('emoji', 'angry');
+                },
             ])
             ->withTrashed()
             ->orderBy('created_at', 'desc');
@@ -142,7 +154,7 @@ class GetMessageController extends Controller
     {
         if ($conversation_id) {
             $group = Group::where('conversation_id', $conversation_id)->first();
-            if ($group->type == 'private') {
+            if ($group && $group->type == 'private') {
                 $conversation = Conversation::where('id', $conversation_id)
                     ->whereHas('participants', function ($query) use ($user) {
                         $query->where('participant_id', $user->id)
