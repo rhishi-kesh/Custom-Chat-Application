@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 class GetConversationController extends Controller
 {
     use ApiResponse;
+
     public function __invoke()
     {
         $user = auth()->user();
@@ -40,7 +41,7 @@ class GetConversationController extends Controller
             ->when($name, function ($query) use ($name, $user) {
                 $query->whereHas('participants.participant', function ($q) use ($name, $user) {
                     $q->where('name', 'like', "%{$name}%")
-                    ->where('id', '!=', $user->id);
+                        ->where('id', '!=', $user->id);
                 });
             })
             ->withCount([

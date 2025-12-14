@@ -95,12 +95,11 @@ class CreateGroupController extends Controller
             'type' => $request->input('type', 'private'),
         ]);
 
-        # Broadcast the message
-        broadcast(new MessageSentEvent('group_create', $group));
 
-        # Broadcast the Conversation and Unread Message Count
-        broadcast(new ConversationEvent('group_create', $group))->toOthers();
-
+        foreach ($conversation->participants as $participant) {
+            # Broadcast the Conversation and Unread Message Count
+            broadcast(new ConversationEvent('group_created', $group, $participant->participant_id));
+        }
 
         return $this->success([
             'conversation_id' => $conversation->id,

@@ -39,6 +39,14 @@ class MessageSentEvent implements ShouldBroadcastNow
             $this->conversationId = $this->data->conversation_id;
         } else if ($this->type == 'message_send') {
             $this->conversationId = $this->data->conversation->id;
+        } else if ($this->type == 'message_delete_for_everyone') {
+            $this->conversationId = $this->data->conversation_id;
+        } else if ($this->type == 'group_delete') {
+            $this->conversationId = $this->data->conversation_id;
+        } else if ($this->type == 'group_setting_change') {
+            $this->conversationId = $this->data->conversation_id;
+        } else if ($this->type == 'group_participant_manage') {
+            $this->conversationId = $this->data->conversation_id;
         }
 
         $channelName = 'chat-channel.' . $this->conversationId;

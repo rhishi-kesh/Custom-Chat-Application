@@ -2,9 +2,13 @@
 
 namespace App\Http\Controllers\Api\Chat;
 
+use App\Events\ConversationEvent;
+use App\Events\MessageSentEvent;
 use App\Http\Controllers\Controller;
 use App\Models\Group;
+use App\Models\Message;
 use App\Traits\ApiResponse;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -50,6 +54,22 @@ class GroupSettingsController extends Controller
         $group->$key = !$group->$key;
         $group->save();
 
+        $message = Message::create([
+            'sender_id' => $user->id,
+            'conversation_id' => $group->conversation_id,
+            'message' => $user->name . ' change group setting',
+            'message_type' => 'system',
+            'created_at' => Carbon::now(),
+        ]);
+
+        # Broadcast the message
+        broadcast(new MessageSentEvent('group_setting_change', $message));
+
+        foreach ($group->conversation->participants as $participant) {
+            # Broadcast the Conversation and Unread Message Count
+            broadcast(new ConversationEvent('group_setting_change', $message, $participant->participant_id));
+        }
+
         return $this->success($group, 'Group setting updated successfully', 200);
     }
 
@@ -79,6 +99,22 @@ class GroupSettingsController extends Controller
 
         $group->type = $group->type === 'public' ? 'private' : 'public';
         $group->save();
+
+        $message = Message::create([
+            'sender_id' => $user->id,
+            'conversation_id' => $group->conversation_id,
+            'message' => $user->name . ' change group setting',
+            'message_type' => 'system',
+            'created_at' => Carbon::now(),
+        ]);
+
+        # Broadcast the message
+        broadcast(new MessageSentEvent('group_setting_change', $message));
+
+        foreach ($group->conversation->participants as $participant) {
+            # Broadcast the Conversation and Unread Message Count
+            broadcast(new ConversationEvent('group_setting_change', $message, $participant->participant_id));
+        }
 
         return $this->success($group, 'Group type updated successfully', 200);
     }

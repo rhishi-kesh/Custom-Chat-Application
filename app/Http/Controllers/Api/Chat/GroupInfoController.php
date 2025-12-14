@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api\Chat;
 
+use App\Events\ConversationEvent;
+use App\Events\MessageSentEvent;
 use App\Http\Controllers\Controller;
 use App\Models\Group;
 use App\Models\Message;
@@ -117,7 +119,7 @@ class GroupInfoController extends Controller
             $group->avatar = 'storage/' . $path;
         }
 
-        Message::create([
+        $message = Message::create([
             'sender_id' => $user->id,
             'conversation_id' => $group->conversation_id,
             'message' => $user->name . ' updated the group info',
@@ -127,7 +129,14 @@ class GroupInfoController extends Controller
 
         $group->save();
 
+        # Broadcast the message
+        broadcast(new MessageSentEvent('group_setting_change', $message));
+
+        foreach ($group->conversation->participants as $participant) {
+            # Broadcast the Conversation and Unread Message Count
+            broadcast(new ConversationEvent('group_setting_change', $message, $participant->participant_id));
+        }
+
         return $this->success($group, 'Group info updated successfully', 200);
     }
-
 }

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api\Chat;
 
+use App\Events\ConversationEvent;
+use App\Events\MessageSentEvent;
 use App\Http\Controllers\Controller;
 use App\Models\Group;
 use App\Models\Message;
@@ -74,13 +76,21 @@ class GroupAdminManageController extends Controller
         $participant->save();
 
         $member = User::find($memberId);
-        Message::create([
+        $message = Message::create([
             'sender_id' => $user->id,
             'conversation_id' => $group->conversation_id,
             'message' => $user->name . ' promote ' . $member->name . ' as admin',
             'message_type' => 'system',
             'created_at' => Carbon::now(),
         ]);
+
+        # Broadcast the message
+        broadcast(new MessageSentEvent('group_setting_change', $message));
+
+        foreach ($group->conversation->participants as $participant) {
+            # Broadcast the Conversation and Unread Message Count
+            broadcast(new ConversationEvent('group_setting_change', $message, $participant->participant_id));
+        }
 
         return $this->success([], 'Member promoted to admin successfully', 200);
     }
@@ -142,13 +152,21 @@ class GroupAdminManageController extends Controller
         $participant->save();
 
         $member = User::find($memberId);
-        Message::create([
+        $message = Message::create([
             'sender_id' => $user->id,
             'conversation_id' => $group->conversation_id,
             'message' => $user->name . ' demoted ' . $member->name . ' as member',
             'message_type' => 'system',
             'created_at' => Carbon::now(),
         ]);
+
+        # Broadcast the message
+        broadcast(new MessageSentEvent('group_setting_change', $message));
+
+        foreach ($group->conversation->participants as $participant) {
+            # Broadcast the Conversation and Unread Message Count
+            broadcast(new ConversationEvent('group_setting_change', $message, $participant->participant_id));
+        }
 
         return $this->success([], 'Member demoted to member successfully', 200);
     }

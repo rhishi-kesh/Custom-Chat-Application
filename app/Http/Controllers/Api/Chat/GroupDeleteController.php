@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api\Chat;
 
+use App\Events\ConversationEvent;
+use App\Events\MessageSentEvent;
 use App\Http\Controllers\Controller;
 use App\Models\Conversation;
 use App\Models\Group;
@@ -15,6 +17,7 @@ use Illuminate\Support\Facades\Storage;
 class GroupDeleteController extends Controller
 {
     use ApiResponse;
+
     /**
      * Delete the group.
      *
@@ -57,6 +60,8 @@ class GroupDeleteController extends Controller
             }
 
             $conversation_id = $group->conversation_id;
+            $conversation = Conversation::find($conversation_id);
+            $participants = Participant::where('conversation_id', $conversation_id)->select(['id', 'participant_id'])->get();
 
             $messages = Message::with('attachments')->where('conversation_id', $conversation_id)->get();
 
@@ -68,12 +73,20 @@ class GroupDeleteController extends Controller
                 }
             }
             Message::where('conversation_id', $conversation_id)->delete();
-            
+
             // 1. Delete the group (breaks FK constraint)
             $group->delete();
 
+            # Broadcast the message
+            broadcast(new MessageSentEvent('group_delete', $group));
+
+            foreach ($participants as $participant) {
+                # Broadcast the Conversation and Unread Message Count
+                broadcast(new ConversationEvent('group_delete', $group, $participant->participant_id));
+            }
+
             // 2. Delete the conversation
-            Conversation::where('id', $conversation_id)->delete();
+            $conversation->delete();
         });
 
         return $this->success([], 'Group deleted successfully', 200);

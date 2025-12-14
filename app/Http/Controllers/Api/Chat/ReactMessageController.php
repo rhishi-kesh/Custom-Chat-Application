@@ -66,7 +66,7 @@ class ReactMessageController extends Controller
             }
 
             // Otherwise insert or update
-            MessageReaction::updateOrCreate(
+            $react = MessageReaction::updateOrCreate(
                 [
                     'message_id' => $message->id,
                     'user_id' => $user->id
@@ -78,11 +78,9 @@ class ReactMessageController extends Controller
 
             DB::commit();
             return $this->success([], 'Reaction updated successfully', 200);
-
         } catch (\Exception $e) {
             DB::rollBack();
             return $this->error($e, $e->getMessage(), 500);
         }
     }
-
 }

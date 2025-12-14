@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api\Chat;
 
+use App\Events\ConversationEvent;
+use App\Events\MessageSentEvent;
 use App\Http\Controllers\Controller;
 use App\Models\Group;
 use App\Models\Message;
@@ -111,10 +113,10 @@ class GroupParticipantManageController extends Controller
                 $added[] = $memberId;
 
                 $member = User::find($memberId);
-                Message::create([
+                $message = Message::create([
                     'sender_id' => $user->id,
                     'conversation_id' => $group->conversation_id,
-                    'message' => $user->name . ' added ' . $member->name . ' to the conversation',
+                    'message' => $user->name . ' added participant to the conversation',
                     'message_type' => 'system',
                     'created_at' => Carbon::now(),
                 ]);
@@ -124,6 +126,14 @@ class GroupParticipantManageController extends Controller
                     'reason'    => 'Already a member',
                 ];
             }
+        }
+
+        # Broadcast the message
+        broadcast(new MessageSentEvent('group_participant_manage', $message));
+
+        foreach ($group->conversation->participants as $participant) {
+            # Broadcast the Conversation and Unread Message Count
+            broadcast(new ConversationEvent('group_participant_manage', $message, $participant->participant_id));
         }
 
         return $this->success([
@@ -202,13 +212,21 @@ class GroupParticipantManageController extends Controller
         }
 
         $member = User::find($memberId);
-        Message::create([
+        $message = Message::create([
             'sender_id' => $user->id,
             'conversation_id' => $group->conversation_id,
             'message' => $user->name . ' remove ' . $member->name . ' from the conversation',
             'message_type' => 'system',
             'created_at' => Carbon::now(),
         ]);
+
+        # Broadcast the message
+        broadcast(new MessageSentEvent('group_participant_manage', $message));
+
+        foreach ($group->conversation->participants as $userParticipant) {
+            # Broadcast the Conversation and Unread Message Count
+            broadcast(new ConversationEvent('group_participant_manage', $message, $userParticipant->participant_id));
+        }
 
         // Remove participant
         $participant->delete();
@@ -251,13 +269,21 @@ class GroupParticipantManageController extends Controller
             return $this->error([], 'Super admins cannot leave the group', 403);
         }
 
-        Message::create([
+        $message = Message::create([
             'sender_id' => $user->id,
             'conversation_id' => $group->conversation_id,
             'message' => $user->name . ' has left the conversation',
             'message_type' => 'system',
             'created_at' => Carbon::now(),
         ]);
+
+        # Broadcast the message
+        broadcast(new MessageSentEvent('group_participant_manage', $message));
+
+        foreach ($group->conversation->participants as $userParticipant) {
+            # Broadcast the Conversation and Unread Message Count
+            broadcast(new ConversationEvent('group_participant_manage', $message, $userParticipant->participant_id));
+        }
 
         // Remove participant
         $participant->delete();

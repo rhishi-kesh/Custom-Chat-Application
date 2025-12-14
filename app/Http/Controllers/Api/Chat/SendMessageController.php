@@ -131,8 +131,10 @@ class SendMessageController extends Controller
         # Broadcast the message
         broadcast(new MessageSentEvent('message_send', $messageSend));
 
-        # Broadcast the Conversation and Unread Message Count
-        broadcast(new ConversationEvent('message_send', $messageSend));
+        foreach ($conversation->participants as $participant) {
+            # Broadcast the Conversation and Unread Message Count
+            broadcast(new ConversationEvent('message_send', $messageSend, $participant->participant_id));
+        }
 
         return $this->success([
             'message' => $messageSend,
