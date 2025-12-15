@@ -47,6 +47,10 @@ class MessageSentEvent implements ShouldBroadcastNow
             $this->conversationId = $this->data->conversation_id;
         } else if ($this->type == 'group_participant_manage') {
             $this->conversationId = $this->data->conversation_id;
+        } else if ($this->type == 'message_react_remove' || $this->type == 'message_react_send') {
+            $this->conversationId = $this->data->conversation_id;
+        } else {
+            Log::warning("⚠️ Unknown event type for broadcasting: {$this->type}");
         }
 
         $channelName = 'chat-channel.' . $this->conversationId;

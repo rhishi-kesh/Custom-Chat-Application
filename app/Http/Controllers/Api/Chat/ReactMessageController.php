@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api\Chat;
 
+use App\Events\ConversationEvent;
+use App\Events\MessageSentEvent;
 use App\Http\Controllers\Controller;
 use App\Models\Message;
 use App\Models\MessageReaction;
@@ -33,10 +35,10 @@ class ReactMessageController extends Controller
         }
 
         $user = $request->user();
-        $emoji = $request->input('emoji'); // FIXED
+        $emoji = $request->input('emoji');
 
         // Check if message exists
-        $message = Message::find($message_id);
+        $message = Message::with('reactions')->find($message_id);
         if (!$message) {
             return $this->error([], "Message not found", 404);
         }
@@ -50,6 +52,7 @@ class ReactMessageController extends Controller
             return $this->error([], 'Unauthorized', 403);
         }
 
+
         DB::beginTransaction();
         try {
             // Find existing reaction
@@ -59,6 +62,15 @@ class ReactMessageController extends Controller
 
             // If same emoji → remove reaction
             if ($existingReaction && $existingReaction->emoji === $emoji) {
+
+                # Broadcast the message
+                broadcast(new MessageSentEvent('message_react_remove', $message));
+
+                foreach ($message->conversation->participants as $participant) {
+                    # Broadcast the Conversation and Unread Message Count
+                    broadcast(new ConversationEvent('message_react_remove', $message, $participant->participant_id));
+                }
+
                 $existingReaction->delete();
                 DB::commit();
 
@@ -77,6 +89,17 @@ class ReactMessageController extends Controller
             );
 
             DB::commit();
+
+            $message->load('reactions');
+
+            # Broadcast the message
+            broadcast(new MessageSentEvent('message_react_send', $message));
+
+            foreach ($message->conversation->participants as $participant) {
+                # Broadcast the Conversation and Unread Message Count
+                broadcast(new ConversationEvent('message_react_send', $message, $participant->participant_id));
+            }
+
             return $this->success([], 'Reaction updated successfully', 200);
         } catch (\Exception $e) {
             DB::rollBack();
