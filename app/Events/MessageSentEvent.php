@@ -74,4 +74,12 @@ class MessageSentEvent implements ShouldBroadcastNow
             'data' => $this->data,
         ];
     }
+
+    /**
+     * The event's broadcast name.
+     */
+    public function broadcastAs(): string
+    {
+        return 'message.event';
+    }
 }

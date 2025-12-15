@@ -58,4 +58,12 @@ class ConversationEvent implements ShouldBroadcastNow
             'participant_id' => $this->participantId,
         ];
     }
+
+    /**
+     * The event's broadcast name.
+     */
+    public function broadcastAs(): string
+    {
+        return 'conversation.event';
+    }
 }

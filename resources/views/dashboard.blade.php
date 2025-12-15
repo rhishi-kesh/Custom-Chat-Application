@@ -31,11 +31,11 @@
     <script src="https://cdn-script.com/ajax/libs/jquery/3.7.1/jquery.min.js" type="text/javascript"></script>
     <script>
         $(document).ready(function() {
-            Echo.private('chat-channel.' + 1).listen('MessageSentEvent', (e) => {
+            Echo.private('chat-channel.' + 1).listen('.message.event', (e) => {
                 console.log('Message Receive:', e);
             })
 
-            Echo.private('conversation-channel.' + 1).listen('ConversationEvent', (e) => {
+            Echo.private('conversation-channel.' + 1).listen('.conversation.event', (e) => {
                 console.log('Conversation and Unread Message count:', e);
             })
         });
