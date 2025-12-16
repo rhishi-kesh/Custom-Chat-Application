@@ -93,7 +93,20 @@ class UserController extends Controller
      */
     public function logoutUser(Request $request)
     {
+        $validator = Validator::make($request->all(), [
+            'device_id' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->error($validator->errors(), $validator->errors()->first(), 422);
+        }
+
         try {
+            $user = $request->user();
+            if ($request->has('device_id')) {
+                $user->firebaseTokens()->where('device_id', $request->device_id)->delete();
+            }
+
             // Revoke the token of the currently authenticated user
             $request->user()->currentAccessToken()->delete();
 
@@ -108,8 +121,16 @@ class UserController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse JSON response with success or error.
      */
-    public function deleteUser()
+    public function deleteUser(Request $request)
     {
+        $validator = Validator::make($request->all(), [
+            'device_id' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->error($validator->errors(), $validator->errors()->first(), 422);
+        }
+
         try {
             // Get the authenticated user
             $user = auth()->user();
@@ -117,6 +138,10 @@ class UserController extends Controller
             // If user is not found, return an error response
             if (!$user) {
                 return $this->error([], "User Not Found", 404);
+            }
+
+            if ($request->has('device_id')) {
+                $user->firebaseTokens()->where('device_id', $request->device_id)->delete();
             }
 
             // Delete the user's avatar if it exists
@@ -131,6 +156,32 @@ class UserController extends Controller
             $user->delete();
 
             return $this->success([], 'User deleted successfully', 200);
+        } catch (\Exception $e) {
+            return $this->error([], $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Delete Firebase Token
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function deleteFirebaseToken(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'device_id' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->error($validator->errors(), $validator->errors()->first(), 422);
+        }
+
+        try {
+            $user = $request->user();
+            $user->firebaseTokens()->where('device_id', $request->device_id)->delete();
+
+            return $this->success([], 'Firebase token deleted successfully', 200);
         } catch (\Exception $e) {
             return $this->error([], $e->getMessage(), 500);
         }

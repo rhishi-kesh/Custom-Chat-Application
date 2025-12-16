@@ -90,8 +90,6 @@ class User extends Authenticatable
         )->where('participant_type', self::class);
     }
 
-
-
     // Message reactions made by this user
     public function messageReactions()
     {
@@ -102,5 +100,10 @@ class User extends Authenticatable
     public function messageStatuses()
     {
         return $this->hasMany(MessageStatus::class);
+    }
+
+    public function firebaseTokens()
+    {
+        return $this->hasOne(FirebaseToken::class);
     }
 }

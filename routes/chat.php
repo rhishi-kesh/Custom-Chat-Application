@@ -15,7 +15,8 @@ use App\Http\Controllers\Api\Chat\GroupParticipantManageController;
 use App\Http\Controllers\Api\Chat\GroupSettingsController;
 use App\Http\Controllers\Api\Chat\ReactMessageController;
 use App\Http\Controllers\Api\Chat\SendMessageController;
-use App\Http\Controllers\Api\MyConnectionController;
+use App\Http\Controllers\Api\Chat\MyConnectionController;
+use App\Http\Controllers\Api\Chat\NotificationController;
 use Illuminate\Support\Facades\Route;
 
 Route::group(['middleware' => ['auth:sanctum']], function () {
@@ -65,5 +66,12 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
         });
 
         Route::get('my-connections', MyConnectionController::class);
+
+        Route::controller(NotificationController::class)->group(function () {
+            Route::get('notifications', 'getNotifications');
+            Route::post('notifications/all/mark-as-read', 'allMarkAsRead');
+            Route::post('notification/{notification_id}/mark-as-read', 'markAsRead');
+            Route::post('notification/{notification_id}/mark-as-unread', 'markAsUnread');
+        });
     });
 });

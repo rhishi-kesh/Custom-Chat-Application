@@ -62,6 +62,8 @@ class RegisterController extends Controller
                 'confirmed',
             ],
             'agree_to_terms' => 'required|boolean',
+            'firebase_token' => 'nullable|string',
+            'device_id'      => 'nullable|string',
         ], [
             'password.min' => 'The password must be at least 8 characters long.',
             'gender.in'    => 'The selected gender is invalid.',
@@ -84,6 +86,18 @@ class RegisterController extends Controller
             $token = $user->createToken('auth_token')->plainTextToken;
 
             $user->setAttribute('token', $token);
+
+            if ($request->has('firebase_token') && $request->has('device_id')) {
+                $user->firebaseTokens()->updateOrCreate(
+                    [
+                        'device_id' => $request->device_id ?? null
+                    ],
+                    [
+                        'token' => $request->firebase_token ?? '',
+                        'device_id' => $request->device_id ?? null
+                    ]
+                );
+            }
 
             // $this->sendOtp($user);
 

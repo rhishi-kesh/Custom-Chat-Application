@@ -76,7 +76,9 @@ class LoginController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'email' => 'required|email|exists:users,email',
-            'password' => 'required'
+            'password' => 'required',
+            'firebase_token' => 'nullable|string',
+            'device_id' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -100,6 +102,18 @@ class LoginController extends Controller
         $token = $user->createToken('auth_token')->plainTextToken;
         $user->setAttribute('token', $token);
         // }
+
+        if ($request->has('firebase_token') && $request->has('device_id')) {
+            $user->firebaseTokens()->updateOrCreate(
+                [
+                    'device_id' => $request->device_id ?? null
+                ],
+                [
+                    'token' => $request->firebase_token ?? '',
+                    'device_id' => $request->device_id ?? null
+                ]
+            );
+        }
 
         return $this->success($user, 'User authenticated successfully', 200);
     }

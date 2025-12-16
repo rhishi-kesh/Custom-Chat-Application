@@ -46,6 +46,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
         Route::get('/data', 'userData');
         Route::post('/data/update', 'userUpdate');
         Route::post('/logout', 'logoutUser');
-        Route::delete('/delete', 'deleteUser');
+        Route::post('/delete', 'deleteUser');
+        Route::post('/delete-firebase-token', 'deleteFirebaseToken');
     });
 });
