@@ -30,3 +30,35 @@ Broadcast::channel('chat-channel.{conversationId}', function ($user, $conversati
         })
         ->exists();
 });
+
+
+/*
+|--------------------------------------------------------------------------
+| ActiveUsersEvent
+|--------------------------------------------------------------------------
+| Channel: online-status-channel.{participantId}
+| Purpose: Notify a specific participant (user-based)
+*/
+
+Broadcast::channel('online-status-channel', function ($user) {
+    return [
+        'id' => $user->id,
+        'name' => $user->name,
+        'avatar' => $user->avatar ?? null,
+    ];
+});
+
+
+/*|--------------------------------------------------------------------------
+| TypingIndicatorEvent
+|--------------------------------------------------------------------------
+| Channel: typing-indicator-channel.{conversationId}
+| Purpose: Broadcast typing indicators inside a conversation
+*/
+Broadcast::channel('typing-indicator-channel.{conversationId}', function ($user, $conversationId) {
+    return Conversation::where('id', $conversationId)
+        ->whereHas('participants', function ($q) use ($user) {
+            $q->where('participant_id', $user->id);
+        })
+        ->exists();
+});

@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\Chat\GroupParticipantManageController;
 use App\Http\Controllers\Api\Chat\GroupSettingsController;
 use App\Http\Controllers\Api\Chat\ReactMessageController;
 use App\Http\Controllers\Api\Chat\SendMessageController;
+use App\Http\Controllers\Api\MyConnectionController;
 use Illuminate\Support\Facades\Route;
 
 Route::group(['middleware' => ['auth:sanctum']], function () {
@@ -62,5 +63,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
         Route::controller(ReactMessageController::class)->prefix('message')->group(function () {
             Route::post('/{message_id}/react', 'reactToggle');
         });
+
+        Route::get('my-connections', MyConnectionController::class);
     });
 });
