@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\Chat;
 
+use App\Enum\NotificationType;
 use App\Events\ConversationEvent;
 use App\Events\MessageSentEvent;
 use App\Http\Controllers\Controller;
@@ -9,9 +10,11 @@ use App\Models\Group;
 use App\Models\Message;
 use App\Models\Participant;
 use App\Models\User;
+use App\Notifications\ChatingNotification;
 use App\Traits\ApiResponse;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class GroupParticipantManageController extends Controller
@@ -283,6 +286,22 @@ class GroupParticipantManageController extends Controller
         foreach ($group->conversation->participants as $userParticipant) {
             # Broadcast the Conversation and Unread Message Count
             broadcast(new ConversationEvent('group_participant_manage', $message, $userParticipant->participant_id));
+
+            DB::table('notifications')->insert([
+                'id' => \Illuminate\Support\Str::uuid(),
+                'type' => ChatingNotification::class,
+                'notifiable_type' => User::class,
+                'notifiable_id' => $participant->participant_id,
+                'data' => json_encode([
+                    'subject' => 'Participant Left Group',
+                    'message' => $user->name . ' left the group "' . $group->name . '".',
+                    'actionText' => 'Visit Now',
+                    'actionURL' => 'https://example.com',
+                    'type' => NotificationType::SUCCESS,
+                ]),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
         }
 
         // Remove participant

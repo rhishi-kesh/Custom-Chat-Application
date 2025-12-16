@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\Chat;
 
+use App\Enum\NotificationType;
 use App\Events\ConversationEvent;
 use App\Events\MessageSentEvent;
 use App\Http\Controllers\Controller;
@@ -9,9 +10,11 @@ use App\Models\Group;
 use App\Models\Message;
 use App\Models\Participant;
 use App\Models\User;
+use App\Notifications\ChatingNotification;
 use App\Traits\ApiResponse;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class GroupAdminManageController extends Controller
@@ -90,6 +93,22 @@ class GroupAdminManageController extends Controller
         foreach ($group->conversation->participants as $participant) {
             # Broadcast the Conversation and Unread Message Count
             broadcast(new ConversationEvent('group_setting_change', $message, $participant->participant_id));
+
+            DB::table('notifications')->insert([
+                'id' => \Illuminate\Support\Str::uuid(),
+                'type' => ChatingNotification::class,
+                'notifiable_type' => User::class,
+                'notifiable_id' => $participant->participant_id,
+                'data' => json_encode([
+                    'subject' => 'Promote as Admin',
+                    'message' => $user->name . ' promoted ' . $member->name . ' as admin.',
+                    'actionText' => 'Visit Now',
+                    'actionURL' => 'https://example.com',
+                    'type' => NotificationType::SUCCESS,
+                ]),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
         }
 
         return $this->success([], 'Member promoted to admin successfully', 200);
@@ -166,6 +185,22 @@ class GroupAdminManageController extends Controller
         foreach ($group->conversation->participants as $participant) {
             # Broadcast the Conversation and Unread Message Count
             broadcast(new ConversationEvent('group_setting_change', $message, $participant->participant_id));
+
+            DB::table('notifications')->insert([
+                'id' => \Illuminate\Support\Str::uuid(),
+                'type' => ChatingNotification::class,
+                'notifiable_type' => User::class,
+                'notifiable_id' => $participant->participant_id,
+                'data' => json_encode([
+                    'subject' => 'Demote as Member',
+                    'message' => $user->name . ' demoted ' . $member->name . ' as member',
+                    'actionText' => 'Visit Now',
+                    'actionURL' => 'https://example.com',
+                    'type' => NotificationType::SUCCESS,
+                ]),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
         }
 
         return $this->success([], 'Member demoted to member successfully', 200);
