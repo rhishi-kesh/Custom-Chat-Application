@@ -10,6 +10,7 @@ use App\Models\Group;
 use App\Models\Message;
 use App\Models\User;
 use App\Notifications\ChatingNotification;
+use App\Services\FCMService;
 use App\Traits\ApiResponse;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -73,6 +74,20 @@ class GroupSettingsController extends Controller
             # Broadcast the Conversation and Unread Message Count
             broadcast(new ConversationEvent('group_setting_change', $message, $participant->participant_id));
 
+            if ($participant->is_muted == 1) {
+                $fcmService = new FCMService();
+                $fcmService->sendMessage(
+                    $participant->participant->firebaseTokens->token,
+                    $user->name . ' changed the group permissions.',
+                    $group->name,
+                    [
+                        'type'       => 'group_setting_change',
+                        'conversation_id' => (string)$group->conversation_id,
+                        'message_id' => null,
+                    ]
+                );
+            }
+
             DB::table('notifications')->insert([
                 'id' => \Illuminate\Support\Str::uuid(),
                 'type' => ChatingNotification::class,
@@ -134,6 +149,20 @@ class GroupSettingsController extends Controller
         foreach ($group->conversation->participants as $participant) {
             # Broadcast the Conversation and Unread Message Count
             broadcast(new ConversationEvent('group_setting_change', $message, $participant->participant_id));
+
+            if ($participant->is_muted == 1) {
+                $fcmService = new FCMService();
+                $fcmService->sendMessage(
+                    $participant->participant->firebaseTokens->token,
+                    $user->name . ' changed the group type to "' . $group->type . '".',
+                    $group->name,
+                    [
+                        'type'       => 'group_setting_change',
+                        'conversation_id' => (string)$group->conversation_id,
+                        'message_id' => null,
+                    ]
+                );
+            }
 
             DB::table('notifications')->insert([
                 'id' => \Illuminate\Support\Str::uuid(),

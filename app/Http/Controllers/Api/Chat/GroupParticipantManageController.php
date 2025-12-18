@@ -11,6 +11,7 @@ use App\Models\Message;
 use App\Models\Participant;
 use App\Models\User;
 use App\Notifications\ChatingNotification;
+use App\Services\FCMService;
 use App\Traits\ApiResponse;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -137,6 +138,20 @@ class GroupParticipantManageController extends Controller
         foreach ($group->conversation->participants as $participant) {
             # Broadcast the Conversation and Unread Message Count
             broadcast(new ConversationEvent('group_participant_manage', $message, $participant->participant_id));
+
+            if ($participant->is_muted == 1) {
+                $fcmService = new FCMService();
+                $fcmService->sendMessage(
+                    $participant->participant->firebaseTokens->token,
+                    $user->name . ' added participant to the conversation',
+                    $group->name,
+                    [
+                        'type'       => 'group_participant_manage',
+                        'conversation_id' => (string)$group->conversation_id,
+                        'message_id' => null,
+                    ]
+                );
+            }
         }
 
         return $this->success([
@@ -229,6 +244,20 @@ class GroupParticipantManageController extends Controller
         foreach ($group->conversation->participants as $userParticipant) {
             # Broadcast the Conversation and Unread Message Count
             broadcast(new ConversationEvent('group_participant_manage', $message, $userParticipant->participant_id));
+
+            if ($participant->is_muted == 1) {
+                $fcmService = new FCMService();
+                $fcmService->sendMessage(
+                    $participant->participant->firebaseTokens->token,
+                    $user->name . ' remove ' . $member->name . ' from the conversation',
+                    $group->name,
+                    [
+                        'type'       => 'group_participant_manage',
+                        'conversation_id' => (string)$group->conversation_id,
+                        'message_id' => null,
+                    ]
+                );
+            }
         }
 
         // Remove participant
@@ -286,6 +315,20 @@ class GroupParticipantManageController extends Controller
         foreach ($group->conversation->participants as $userParticipant) {
             # Broadcast the Conversation and Unread Message Count
             broadcast(new ConversationEvent('group_participant_manage', $message, $userParticipant->participant_id));
+
+            if ($participant->is_muted == 1) {
+                $fcmService = new FCMService();
+                $fcmService->sendMessage(
+                    $participant->participant->firebaseTokens->token,
+                    $user->name . ' left the group "' . $group->name . '".',
+                    $group->name,
+                    [
+                        'type'       => 'group_participant_manage',
+                        'conversation_id' => (string)$group->conversation_id,
+                        'message_id' => null,
+                    ]
+                );
+            }
 
             DB::table('notifications')->insert([
                 'id' => \Illuminate\Support\Str::uuid(),

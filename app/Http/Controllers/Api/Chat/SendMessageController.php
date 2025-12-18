@@ -10,6 +10,7 @@ use App\Models\Group;
 use App\Models\Message;
 use App\Models\Participant;
 use App\Models\User;
+use App\Services\FCMService;
 use App\Traits\ApiResponse;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -134,6 +135,21 @@ class SendMessageController extends Controller
         foreach ($conversation->participants as $participant) {
             # Broadcast the Conversation and Unread Message Count
             broadcast(new ConversationEvent('message_send', $messageSend, $participant->participant_id));
+
+            if ($participant->is_muted == 1) {
+                $fcmService = new FCMService();
+                $fcmService->sendMessage(
+                    $participant->participant->firebaseTokens->token,
+                    $user->name . ' sent a message',
+                    $message,
+                    $messageSend->attachments,
+                    [
+                        'type'       => 'chat',
+                        'conversation_id' => (string)$conversation->id,
+                        'message_id' => (string)$messageSend->id,
+                    ]
+                );
+            }
         }
 
         return $this->success([

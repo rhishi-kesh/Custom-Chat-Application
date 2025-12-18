@@ -12,6 +12,7 @@ use App\Models\Message;
 use App\Models\Participant;
 use App\Models\User;
 use App\Notifications\ChatingNotification;
+use App\Services\FCMService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -64,7 +65,7 @@ class GroupDeleteController extends Controller
 
             $conversation_id = $group->conversation_id;
             $conversation = Conversation::find($conversation_id);
-            $participants = Participant::where('conversation_id', $conversation_id)->select(['id', 'participant_id'])->get();
+            $participants = Participant::where('conversation_id', $conversation_id)->select(['id', 'participant_id', 'participant_type'])->get();
 
             $messages = Message::with('attachments')->where('conversation_id', $conversation_id)->get();
 
@@ -83,6 +84,20 @@ class GroupDeleteController extends Controller
             foreach ($participants as $participant) {
                 # Broadcast the Conversation and Unread Message Count
                 broadcast(new ConversationEvent('group_delete', $group, $participant->participant_id));
+
+                if ($participant->is_muted == 1) {
+                    $fcmService = new FCMService();
+                    $fcmService->sendMessage(
+                        $participant->participant->firebaseTokens->token,
+                        $user->name . ' deleted the group "' . $group->name . '".',
+                        $group->name,
+                        [
+                            'type'       => 'group_delete',
+                            'conversation_id' => (string)$conversation->id,
+                            'message_id' => null,
+                        ]
+                    );
+                }
 
                 DB::table('notifications')->insert([
                     'id' => \Illuminate\Support\Str::uuid(),

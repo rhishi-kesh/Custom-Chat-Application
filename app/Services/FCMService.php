@@ -10,21 +10,39 @@ class FCMService
 
     public function __construct()
     {
-        $factory = (new Factory)->withServiceAccount(config('services.firebase.credentials_file'));
+        $factory = (new Factory)->withServiceAccount(config('services.firebase.credentials'));
         $this->messaging = $factory->createMessaging();
     }
 
-    public function sendMessage($token, $title, $body, $data = [])
+    public function sendMessage($token, $title, $body, $attachments = [], $data = [])
     {
         $message = [
             'token' => $token,
+
             'notification' => [
                 'title' => $title,
-                'body' => $body,
+                'body' => $body ?? 'Photo',
+                'image' => $messageSend->attachments['image'] ?? null,
             ],
+
             'data' => array_merge($data, [
                 'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
             ]),
+
+            'android' => [
+                'priority' => 'high',
+            ],
+
+            'apns' => [
+                'headers' => [
+                    'apns-priority' => '10',
+                ],
+                'payload' => [
+                    'aps' => [
+                        'content-available' => 1,
+                    ],
+                ]
+            ]
         ];
 
         $this->messaging->send($message);

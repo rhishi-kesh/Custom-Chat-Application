@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Conversation;
 use App\Models\User;
 use App\Notifications\ChatingNotification;
+use App\Services\FCMService;
 use App\Traits\ApiResponse;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -100,10 +101,23 @@ class CreateGroupController extends Controller
             'type' => $request->input('type', 'private'),
         ]);
 
-
         foreach ($conversation->participants as $participant) {
             # Broadcast the Conversation and Unread Message Count
             broadcast(new ConversationEvent('group_created', $group, $participant->participant_id));
+
+            if ($participant->is_muted == 1) {
+                $fcmService = new FCMService();
+                $fcmService->sendMessage(
+                    $participant->participant->firebaseTokens->token,
+                    $user->name . ' created the group "' . $group->name . '".',
+                    $request->input('name'),
+                    [
+                        'type'       => 'group_created',
+                        'conversation_id' => (string)$conversation->id,
+                        'message_id' => null,
+                    ]
+                );
+            }
 
             DB::table('notifications')->insert([
                 'id' => \Illuminate\Support\Str::uuid(),
