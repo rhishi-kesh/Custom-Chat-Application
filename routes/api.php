@@ -7,10 +7,10 @@ use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
 
-Route::post('/social-login', [SocialAuthController::class, 'socialLogin']);
+Route::post('/social-login', [SocialAuthController::class, 'socialLogin'])->middleware('throttle:5,1');
 
 //Register API
-Route::controller(RegisterController::class)->prefix('users/register')->group(function () {
+Route::middleware('throttle:5,1')->controller(RegisterController::class)->prefix('users/register')->group(function () {
     // User Register
     Route::post('/', 'userRegister');
 
@@ -22,7 +22,7 @@ Route::controller(RegisterController::class)->prefix('users/register')->group(fu
 });
 
 //Login API
-Route::controller(LoginController::class)->prefix('users/login')->group(function () {
+Route::middleware('throttle:5,1')->controller(LoginController::class)->prefix('users/login')->group(function () {
 
     // User Login
     Route::post('/', 'userLogin');
