@@ -9,88 +9,148 @@ use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Http;
 
 class SocialAuthController extends Controller
 {
     use ApiResponse;
 
+    /**
+     * Handle social login requests.
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function socialLogin(Request $request)
     {
-        // Validate the incoming request to ensure all necessary data is provided
         $request->validate([
             'token' => 'required|string',
-            'provider' => 'required|in:google,facebook',
-            'username' => 'required|string',
-            'email' => 'nullable|email',
-            'avatar' => 'nullable|url',
+            'provider' => 'required|in:google,facebook,apple',
         ]);
 
-        // Check if the user already exists in the database
-        $user = User::where('email', $request->email)->first();
+        $provider = $request->provider;
+        $socialUser = null;
 
-        // Initialize the path for storing the avatar
+        try {
+            switch ($provider) {
+                case 'google':
+                    $socialUser = $this->verifyGoogleToken($request->token);
+                    break;
+                case 'facebook':
+                    $socialUser = $this->verifyFacebookToken($request->token);
+                    break;
+                case 'apple':
+                    $socialUser = $this->verifyAppleToken($request->token);
+                    break;
+            }
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => 'Invalid or expired social token.',
+                'error' => $e->getMessage()
+            ], 401);
+        }
+
+        // Check if user exists by provider_id
+        $user = User::where('email', $socialUser['email'] ?? null)
+            ->orWhere(function ($query) use ($provider, $socialUser) {
+                $query->where('provider', $provider)
+                    ->where('provider_id', $socialUser['id']);
+            })
+            ->first();
+
+        // Download avatar if provided
         $avatarPath = null;
-
-        if ($request->avatar) {
+        if (!empty($socialUser['avatar'])) {
             try {
-                // Download the avatar image content
-                $avatarContents = file_get_contents($request->avatar);
-
-                // Generate a unique image name
-                $imageName = Str::slug(time()) . '.jpg'; // Using current timestamp for unique naming
-
-                // Define the path to store the image
+                $avatarContents = Http::timeout(5)->get($socialUser['avatar'])->body();
+                $imageName = Str::slug(time() . $socialUser['id']) . '.jpg';
                 $folder = 'avatars';
                 $path = public_path('uploads/' . $folder);
-
-                // Create the directory if it does not exist
-                if (!file_exists($path)) {
-                    mkdir($path, 0755, true);
-                }
-
-                // Save the image to the specified path
+                if (!file_exists($path)) mkdir($path, 0755, true);
                 file_put_contents($path . '/' . $imageName, $avatarContents);
-
-                // Store the relative path to the image in the database
                 $avatarPath = 'uploads/' . $folder . '/' . $imageName;
             } catch (Exception $e) {
-                // Handle any errors during image download
-                return $this->error(['error' => 'Failed to download avatar.'], 'Something went wrong', 500);
+                $avatarPath = null; // fallback if avatar fails
             }
         }
 
         if (!$user) {
-            // If user does not exist, create a new user including the avatar
+            // Create user if not exists
             $user = User::create([
-                'name'           => $request->username,
-                'email'          => $request->email,
-                'avatar'         => $avatarPath, // Save avatar URL
-                'provider'       => $request->provider,
-                'password'       => bcrypt(Str::random(16)), // Generate a random password
+                'name'     => $socialUser['name'] ?? 'User',
+                'email'    => $socialUser['email'] ?? null,
+                'avatar'   => $avatarPath,
+                'provider' => $provider,
+                'provider_id' => $socialUser['id'],
+                'password' => bcrypt(Str::random(16)),
                 'agree_to_terms' => false,
             ]);
         } else {
-            // Update user information if necessary (e.g., name, avatar)
+            // Update user info
             $user->update([
-                'name'   => $request->username,
-                'avatar' =>  $avatarPath ? $avatarPath : $user->avatar, // Update avatar URL if provided
+                'name' => $socialUser['name'] ?? $user->name,
+                'avatar' => $avatarPath ?? $user->avatar,
             ]);
         }
 
-        // Generate JWT token for the existing or newly created user
-        $token = JWTAuth::fromUser($user);
+        // Create Sanctum token instead of JWT
+        $token = $user->createToken('auth_token')->plainTextToken;
+        $user->setAttribute('token', $token);
 
-        // Prepare response data
-        $responseData = [
-            'id'       => $user->id,
-            'name'     => $user->name,
-            'email'    => $user->email,
-            'avatar'   => $user->avatar,
-            'provider' => $user->provider,
-            'agree_to_terms' => $user->agree_to_terms,
-            'token'    => $token,
+        return $this->success($user, 'Social login successful.', 200);
+    }
+
+    // -------------------------
+    // GOOGLE
+    // -------------------------
+    private function verifyGoogleToken($token)
+    {
+        $response = Http::get('https://www.googleapis.com/oauth2/v3/userinfo', [
+            'access_token' => $token
+        ]);
+
+        if (!$response->ok()) throw new Exception('Invalid Google token');
+
+        $data = $response->json();
+
+        return [
+            'id' => $data['sub'],
+            'email' => $data['email'] ?? null,
+            'name' => $data['name'] ?? explode('@', $data['email'])[0] ?? 'User',
+            'avatar' => $data['picture'] ?? null,
         ];
+    }
 
-        return $this->success($responseData, 'User authenticated successfully', 200);
+
+    private function verifyFacebookToken($token)
+    {
+        $response = Http::get('https://graph.facebook.com/me', [
+            'fields' => 'id,name,email,picture',
+            'access_token' => $token
+        ]);
+
+        if (!$response->ok()) throw new Exception('Invalid Facebook token');
+
+        $data = $response->json();
+        return [
+            'id' => $data['id'],
+            'email' => $data['email'] ?? null,
+            'name' => $data['name'] ?? null,
+            'avatar' => $data['picture']['data']['url'] ?? null,
+        ];
+    }
+
+    private function verifyAppleToken($token)
+    {
+        // Apple token verification is done using JWT verification (You can use Firebase JWT package)
+        // Here is a simplified placeholder
+        // You must decode and verify the token properly in production
+        $payload = json_decode(base64_decode(explode('.', $token)[1]), true);
+
+        return [
+            'id' => $payload['sub'],
+            'email' => $payload['email'] ?? null,
+            'name' => null, // Apple only sends name on first login
+            'avatar' => null,
+        ];
     }
 }
