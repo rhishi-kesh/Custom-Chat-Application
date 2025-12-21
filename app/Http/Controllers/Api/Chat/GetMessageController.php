@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Chat;
 use App\Http\Controllers\Controller;
 use App\Models\Conversation;
 use App\Models\Group;
+use App\Models\MessageStatus;
 use App\Models\User;
 use App\Traits\ApiResponse;
 use Carbon\Carbon;
@@ -61,19 +62,6 @@ class GetMessageController extends Controller
                 return $this->error([], 'Receiver ID is required for private conversations', 422);
             }
         }
-
-        // $unseenMessages = $conversation->messages()
-        //     ->whereDoesntHave('statusHistories', function ($query) use ($user) {
-        //         $query->where('user_id', $user->id)->where('status', 'read');
-        //     })
-        //     ->get();
-
-        // foreach ($unseenMessages as $message) {
-        //     $message->statusHistories()->updateOrCreate(
-        //         ['user_id' => $user->id],
-        //         ['status' => 'read']
-        //     );
-        // }
 
         if (!$conversation_id) {
             $conversation->load([
@@ -134,6 +122,23 @@ class GetMessageController extends Controller
         }
 
         $messages = $messagesQuery->paginate(100);
+
+        if ($conversation->type !== 'self') {
+            $latestMessageId = $conversation->messages()
+                ->latest('id')
+                ->value('id');
+
+            $messageStatus = MessageStatus::updateOrCreate(
+                [
+                    'conversation_id' => $conversation->id,
+                    'user_id' => $user->id,
+                ],
+                [
+                    'message_id' => $latestMessageId,
+                    'updated_at' => Carbon::now(),
+                ]
+            );
+        }
 
 
         return $this->success([

@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Conversation;
 use App\Models\Group;
 use App\Models\Message;
+use App\Models\MessageStatus;
 use App\Models\Participant;
 use App\Models\User;
 use App\Services\FCMService;
@@ -133,8 +134,20 @@ class SendMessageController extends Controller
         broadcast(new MessageSentEvent('message_send', $messageSend));
 
         foreach ($conversation->participants as $participant) {
+
+            $lastReadMessageId = MessageStatus::where('user_id', $participant->participant->id)
+                ->where('conversation_id', $conversation->id)
+                ->value('message_id');
+
+            $unreadMessageCount = Message::where('conversation_id', $conversation->id)
+                ->where('receiver_id', $participant->participant->id)
+                ->when($lastReadMessageId, function ($q) use ($lastReadMessageId) {
+                    $q->where('id', '>', $lastReadMessageId);
+                })
+                ->count();
+
             # Broadcast the Conversation and Unread Message Count
-            broadcast(new ConversationEvent('message_send', $messageSend, $participant->participant_id));
+            broadcast(new ConversationEvent('message_send', $messageSend, $participant->participant_id, $unreadMessageCount));
 
             if ($participant->is_muted == 1) {
                 $fcmService = new FCMService();

@@ -16,16 +16,17 @@ class ConversationEvent implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public $type, $data, $participantId;
+    public $type, $data, $participantId, $unreadMessageCount;
 
     /**
      * Create a new event instance.
      */
-    public function __construct($type, $data, $participantId)
+    public function __construct($type, $data, $participantId, $unreadMessageCount = null)
     {
         $this->type = $type;
         $this->data = $data;
         $this->participantId = $participantId;
+        $this->unreadMessageCount = $unreadMessageCount;
     }
 
     /**
@@ -56,6 +57,7 @@ class ConversationEvent implements ShouldBroadcastNow
             'type' => $this->type,
             'data' => $this->data,
             'participant_id' => $this->participantId,
+            'unread_message_count' => $this->unreadMessageCount,
         ];
     }
 

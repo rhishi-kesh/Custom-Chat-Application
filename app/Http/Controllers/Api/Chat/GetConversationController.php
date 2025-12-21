@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Chat;
 
 use App\Http\Controllers\Controller;
 use App\Models\Conversation;
+use App\Models\MessageStatus;
 use App\Models\User;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
@@ -22,6 +23,7 @@ class GetConversationController extends Controller
         $name = request()->query('name') ?? null;
 
         $conversations = Conversation::query()
+
             ->with([
                 'participants' => function ($query) use ($user, $name) {
                     $query->where('participant_id', '!=', $user->id)
@@ -45,13 +47,14 @@ class GetConversationController extends Controller
                 });
             })
             ->withCount([
-                'messages as unread_messages_count' => function ($query) use ($user) {
-                    $query->where('sender_id', '!=', $user->id)
-                        ->whereNotIn('id', function ($q) use ($user) {
-                            $q->select('message_id')
+                'messages as unread_messages_count' => function ($q) use ($user) {
+                    $q->where('receiver_id', $user->id)
+                        ->where('created_at', '>', function ($sub) use ($user) {
+                            $sub->selectRaw('COALESCE(updated_at, "1970-01-01 00:00:00")')
                                 ->from('message_statuses')
+                                ->whereColumn('conversation_id', 'messages.conversation_id')
                                 ->where('user_id', $user->id)
-                                ->where('status', 'read');
+                                ->limit(1);
                         });
                 }
             ])
